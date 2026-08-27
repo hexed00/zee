@@ -1,0 +1,114 @@
+-- PURE AUTO SHOOT + RAINBOW FLOATING WIDGET
+-- Da Hood / Zee Des Hood (the version that works)
+
+getgenv().AutoShoot = true                  -- starts ON
+local TOGGLE_KEY = Enum.KeyCode.T           -- T = toggle shooting
+local WIDGET_KEY = Enum.KeyCode.Insert      -- Insert = show/hide rainbow widget
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+-- ==================== RAINBOW FLOATING WIDGET ====================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MatchaRainbow"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = game:GetService("CoreGui")
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 230, 0, 95)
+Frame.Position = UDim2.new(0.5, -115, 0.12, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = Frame
+
+local Stroke = Instance.new("UIStroke")
+Stroke.Thickness = 2.5
+Stroke.Parent = Frame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "DARRS • AUTO SHOOT"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 15
+Title.Parent = Frame
+
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(1, -20, 0, 22)
+Status.Position = UDim2.new(0, 10, 0, 35)
+Status.BackgroundTransparency = 1
+Status.Text = "Auto Shoot: ON"
+Status.TextColor3 = Color3.fromRGB(80, 255, 120)
+Status.Font = Enum.Font.Gotham
+Status.TextSize = 14
+Status.TextXAlignment = Enum.TextXAlignment.Left
+Status.Parent = Frame
+
+local Info = Instance.new("TextLabel")
+Info.Size = UDim2.new(1, -20, 0, 22)
+Info.Position = UDim2.new(0, 10, 0, 60)
+Info.BackgroundTransparency = 1
+Info.Text = "T = Toggle Shoot  |  Insert = Hide UI"
+Info.TextColor3 = Color3.fromRGB(170, 170, 180)
+Info.Font = Enum.Font.Gotham
+Info.TextSize = 12
+Info.TextXAlignment = Enum.TextXAlignment.Left
+Info.Parent = Frame
+
+-- Rainbow effect
+local hue = 0
+RunService.RenderStepped:Connect(function()
+    if ScreenGui.Enabled then
+        hue = (hue + 0.009) % 1
+        local color = Color3.fromHSV(hue, 1, 1)
+        Stroke.Color = color
+        Title.TextColor3 = color
+    end
+end)
+
+-- ==================== WORKING AUTO SHOOT ====================
+local function getGun()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+    return char:FindFirstChildOfClass("Tool")
+end
+
+RunService.Heartbeat:Connect(function()
+    if not getgenv().AutoShoot then return end
+
+    local gun = getGun()
+    if gun then
+        pcall(function()
+            gun:Activate()
+        end)
+    end
+end)
+
+-- ==================== KEYBINDS ====================
+UIS.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+
+    if input.KeyCode == TOGGLE_KEY then
+        getgenv().AutoShoot = not getgenv().AutoShoot
+        Status.Text = "Auto Shoot: " .. (getgenv().AutoShoot and "ON" or "OFF")
+        Status.TextColor3 = getgenv().AutoShoot and Color3.fromRGB(80, 255, 120) or Color3.fromRGB(255, 80, 80)
+        print("[Matcha] Auto Shoot:", getgenv().AutoShoot and "ON" or "OFF")
+    end
+
+    if input.KeyCode == WIDGET_KEY then
+        ScreenGui.Enabled = not ScreenGui.Enabled
+    end
+end)
+
+print("[Matcha] Working Auto Shoot + Rainbow Widget loaded")
+print("Equip any gun → it sprays. T = toggle. Insert = hide UI")
