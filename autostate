@@ -1,0 +1,108 @@
+--[[
+    Motiona Panel Auto — Zombie everything + Vampire Jump/Fall
+    Sets the Custom Animations Set textboxes then fires Apply
+]]
+
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local ZOMBIE = "Zombie Animation Pack"
+local VAMPIRE = "Vampire Animation Pack"
+
+local function findMotionaGui()
+    for _, obj in ipairs(CoreGui:GetDescendants()) do
+        if obj.Name == "CustomAnimationSet" and obj:IsA("CanvasGroup") then
+            return obj
+        end
+    end
+    local pg = player:FindFirstChild("PlayerGui")
+    if pg then
+        for _, obj in ipairs(pg:GetDescendants()) do
+            if obj.Name == "CustomAnimationSet" and obj:IsA("CanvasGroup") then
+                return obj
+            end
+        end
+    end
+    return nil
+end
+
+local function setPanel()
+    local customSet = findMotionaGui()
+    if not customSet then
+        warn("[Motiona Auto] CustomAnimationSet not found — open Motiona first")
+        return false
+    end
+
+    local scroll = customSet:FindFirstChild("Frame") and customSet.Frame:FindFirstChild("ScrollingFrame")
+    if not scroll then
+        warn("[Motiona Auto] ScrollingFrame missing")
+        return false
+    end
+
+    local mapping = {
+        idle     = ZOMBIE,
+        run      = ZOMBIE,
+        walk     = ZOMBIE,
+        jump     = VAMPIRE,
+        fall     = VAMPIRE,
+        swim     = ZOMBIE,
+        swimidle = ZOMBIE,
+        climb    = ZOMBIE,
+    }
+
+    for slotName, packName in pairs(mapping) do
+        local slot = scroll:FindFirstChild(slotName)
+        if slot then
+            local tb = slot:FindFirstChild("TextBox")
+            if tb then
+                tb.Text = packName
+                print("[Motiona Auto] set", slotName, "→", packName)
+            end
+        end
+    end
+
+    local applyFrame = scroll:FindFirstChild("ApplyFrame")
+    if applyFrame then
+        local btn = applyFrame:FindFirstChild("TextButton")
+        if btn then
+            pcall(function() firesignal(btn.MouseButton1Click) end)
+            pcall(function() btn.MouseButton1Click:Fire() end)
+            pcall(function()
+                local vim = game:GetService("VirtualInputManager")
+                local abs = btn.AbsolutePosition
+                local size = btn.AbsoluteSize
+                local x = abs.X + size.X / 2
+                local y = abs.Y + size.Y / 2
+                vim:SendMouseButtonEvent(x, y, 0, true, game, 1)
+                task.wait(0.05)
+                vim:SendMouseButtonEvent(x, y, 0, false, game, 1)
+            end)
+            print("[Motiona Auto] Apply fired")
+        end
+    end
+    return true
+end
+
+local function waitAndSet()
+    local tries = 0
+    while tries < 40 do
+        if findMotionaGui() then
+            task.wait(0.3)
+            if setPanel() then
+                print("[Motiona Auto] Zombie body + Vampire jump/fall locked on panel")
+                return
+            end
+        end
+        tries = tries + 1
+        task.wait(0.25)
+    end
+    warn("[Motiona Auto] timed out — open Motiona GUI first then re-run")
+end
+
+waitAndSet()
+
+player.CharacterAdded:Connect(function()
+    task.wait(1.5)
+    setPanel()
+end)
